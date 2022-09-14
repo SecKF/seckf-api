@@ -1,6 +1,5 @@
 import datetime
 
-from seckf.database import db
 from seckf.database.checklist_kb_code_item import ChecklistKBCodeItem
 from seckf.database.checklist_types import ChecklistType
 from seckf.database.checklists_kb import ChecklistKB
@@ -16,7 +15,7 @@ from seckf.database.questions import Question
 from seckf.database.users import User
 
 
-def load_initial_data():
+def load_initial_data(db):
     try:
         p = Privilege('edit:read:manage:delete')
         db.session.add(p)

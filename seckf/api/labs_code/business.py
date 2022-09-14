@@ -67,6 +67,21 @@ def randomize_id_for_code_lab_challenge(finished_labs, total_labs):
     return random_lab
 
 
+def get_labs_code(code_type):
+    log("User requested list of code review items", "LOW", "PASS")
+    result = LabItemCode.query.filter(LabItemCode.code_type == code_type).paginate(1, 2500, False)
+    return result
+
+
+def get_labs_code_status(code_id, solution_id):
+    log("User requested status of code item with solution", "LOW", "PASS")
+    result = LabItemCode.query.filter((LabItemCode.id == code_id) & (LabItemCode.solution == solution_id)).count()
+    if result > 0:
+        return {'status': 'correct'}
+    else:
+        return {'status': 'incorrect'}
+
+
 def get_labs_code_sol(solutions_id):
     log("User requested list of code labs solution items", "LOW", "PASS")
     count = LabItemCodeOptions.query.count()

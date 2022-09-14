@@ -17,58 +17,110 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-import logging.config
+import logging
+import sys
 
 from flask import Flask, Blueprint
+from flask_bcrypt import Bcrypt
 from flask_cors import CORS
+from flask_migrate import Migrate
 
 from seckf import settings
+from seckf.api.chatbot.endpoints.chatbot_question import ns as chatbot_namespace
+from seckf.api.checklist.endpoints.checklist_item import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_item_delete import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_item_new import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_item_question import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_item_update import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_items import ns as checklist_namespace
 from seckf.api.checklist.endpoints.checklist_items_questions import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_question_correlation_update import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_create import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_delete import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_item import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_items import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_items_with_filter import ns as checklist_namespace
+from seckf.api.checklist.endpoints.checklist_type_update import ns as checklist_namespace
+from seckf.api.checklist_category.endpoints.checklist_category_create import ns as checklist_category
+from seckf.api.checklist_category.endpoints.checklist_category_delete import ns as checklist_category
+from seckf.api.checklist_category.endpoints.checklist_category_item import ns as checklist_category
+from seckf.api.checklist_category.endpoints.checklist_category_items import ns as checklist_category
 from seckf.api.checklist_category.endpoints.checklist_category_update import ns as checklist_category
 from seckf.api.code.endpoints.checklist_kb_code_items import ns as code_namespace
+from seckf.api.code.endpoints.checklist_kb_code_items_delete import ns as code_namespace
+from seckf.api.code.endpoints.checklist_kb_code_items_new import ns as code_namespace
+from seckf.api.code.endpoints.code_item import ns as code_namespace
+from seckf.api.code.endpoints.code_item_delete import ns as code_namespace
+from seckf.api.code.endpoints.code_item_update import ns as code_namespace
+from seckf.api.code.endpoints.code_items import ns as code_namespace
+from seckf.api.code.endpoints.code_items_new import ns as code_namespace
+from seckf.api.kb.endpoints.kb_item import ns as kb_namespace
+from seckf.api.kb.endpoints.kb_item_delete import ns as kb_namespace
 from seckf.api.kb.endpoints.kb_item_new import ns as kb_namespace
+from seckf.api.kb.endpoints.kb_item_update import ns as kb_namespace
+from seckf.api.kb.endpoints.kb_items import ns as kb_namespace
+from seckf.api.labs.endpoints.lab_code_item_sol import ns as lab_namespace
+from seckf.api.labs.endpoints.lab_code_items import ns as lab_namespace
+from seckf.api.labs.endpoints.lab_code_verify import ns as lab_namespace
 from seckf.api.labs.endpoints.lab_delete import ns as lab_namespace
+from seckf.api.labs.endpoints.lab_deployments import ns as lab_namespace
+from seckf.api.labs.endpoints.lab_items import ns as lab_namespace
+from seckf.api.labs_code.endpoints.lab_code_random_item import ns as lab_code_namespace
 from seckf.api.labs_code.endpoints.lab_code_verify_answer import ns as lab_code_namespace
+from seckf.api.projects.endpoints.project_delete import ns as project_namespace
 from seckf.api.projects.endpoints.project_item import ns as project_namespace
+from seckf.api.projects.endpoints.project_items import ns as project_namespace
+from seckf.api.projects.endpoints.project_new import ns as project_namespace
+from seckf.api.projects.endpoints.project_stats import ns as project_namespace
+from seckf.api.projects.endpoints.project_update import ns as project_namespace
+from seckf.api.questions.endpoints.question_item import ns as questions_namespace
+from seckf.api.questions.endpoints.question_item_delete import ns as questions_namespace
+from seckf.api.questions.endpoints.question_item_new import ns as questions_namespace
+from seckf.api.questions.endpoints.question_item_update import ns as questions_namespace
+from seckf.api.questions.endpoints.question_items import ns as questions_namespace
 from seckf.api.questions.endpoints.question_store import ns as questions_namespace
 from seckf.api.restplus import api
+from seckf.api.search.endpoints.search_checklist import ns as search_namespace
+from seckf.api.search.endpoints.search_code import ns as search_namespace
+from seckf.api.search.endpoints.search_kb import ns as search_namespace
+from seckf.api.search.endpoints.search_lab import ns as search_namespace
 from seckf.api.search.endpoints.search_project import ns as search_namespace
+from seckf.api.sprints.endpoints.sprint_delete import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_item import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_new import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_results import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_results_delete import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_results_export import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_results_export_external import ns as sprints_namespace
 from seckf.api.sprints.endpoints.sprint_results_update import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_stats import ns as sprints_namespace
+from seckf.api.sprints.endpoints.sprint_update import ns as sprints_namespace
+from seckf.api.user.endpoints.user_activate import ns as users_namespace
+from seckf.api.user.endpoints.user_create import ns as users_namespace
+from seckf.api.user.endpoints.user_list import ns as users_namespace
 from seckf.api.user.endpoints.user_listprivileges import ns as users_namespace
-from seckf.chatbot_tools import init_dataset
+from seckf.api.user.endpoints.user_login import ns as users_namespace
+from seckf.api.user.endpoints.user_login_skip import ns as users_namespace
+from seckf.api.user.endpoints.user_manage import ns as users_namespace
 from seckf.database import db
-from seckf.db_tools import clean_db, update_db, init_db
 
 
-def create_app():
-    flask_app = Flask(__name__)
-    configure_app(flask_app)
-    initialize_app(flask_app)
-    db.init_app(flask_app)
-    return flask_app
+def create_app(config_object="seckf.settings"):
+    """Create application factory, as explained here: https://flask.palletsprojects.com/en/2.2.x/config/.
+
+    :param config_object: The configuration object to use.
+    """
+    app = Flask(__name__)
+    app.config.from_object(config_object)
+    register_extensions(app)
+    register_blueprints(app)
+    configure_logger(app)
+
+    return app
 
 
-def configure_app(flask_app):
-    """Configure the SKF app."""
-    # cannot use SERVER_NAME because it will mess up the routing
-    # flask_app.config['SERVER_NAME'] = settings.FLASK_SERVER_NAME
-    flask_app.config['SQLALCHEMY_DATABASE_URI'] = settings.SQLALCHEMY_DATABASE_URI
-    flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = settings.SQLALCHEMY_TRACK_MODIFICATIONS
-    flask_app.config['SWAGGER_UI_DOC_EXPANSION'] = settings.RESTPLUS_SWAGGER_UI_DOC_EXPANSION
-    flask_app.config['RESTPLUS_VALIDATE'] = settings.RESTPLUS_VALIDATE
-    flask_app.config['RESTPLUS_MASK_SWAGGER'] = settings.RESTPLUS_MASK_SWAGGER
-    flask_app.config['ERROR_404_HELP'] = settings.RESTPLUS_ERROR_404_HELP
-    flask_app.config['TESTING'] = settings.TESTING
-    flask_app.config['FLASK_DEBUG'] = settings.FLASK_DEBUG
-    flask_app.config['SQLALCHEMY_ECHO'] = settings.SQLALCHEMY_ECHO
-    flask_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = settings.SQLALCHEMY_TRACK_MODIFICATIONS
-    # flask_app.config['RABBIT_MQ_CONN_STRING'] = settings.RABBIT_MQ_CONN_STRING
-    # flask_app.config['RABBIT_MQ_DEPLOYMENT_WORKER'] = settings.RABBIT_MQ_DEPLOYMENT_WORKER
-    # flask_app.config['RABBIT_MQ_DELETION_WORKER'] = settings.RABBIT_MQ_DELETION_WORKER
-
-
-def initialize_app(flask_app):
-    """Initialize the SKF app."""
+def register_blueprints(app):
+    """Initialize the seckf app."""
     blueprint = Blueprint('api', __name__, url_prefix='/api')
     api.init_app(blueprint)
     api.add_namespace(lab_namespace)
@@ -82,40 +134,21 @@ def initialize_app(flask_app):
     api.add_namespace(checklist_category)
     api.add_namespace(questions_namespace)
     api.add_namespace(search_namespace)
-    flask_app.register_blueprint(blueprint)
+    api.add_namespace(chatbot_namespace)
+    app.register_blueprint(blueprint)
 
 
-app = create_app()
-
-# TO DO FIX WILDCARD ONLY ALLOW NOW FOR DEV
-cors = CORS(app, resources={r"/api/*": {"origins": settings.ORIGINS}})
-logging.config.fileConfig('logging.conf')
-log = logging.getLogger(__name__)
-
-
-@app.cli.command('cleandb')
-def cleandb_command():
-    """Delete DB and creates a new database with all the Markdown files."""
-    clean_db()
-    log.info("cleaned the database.")
+def register_extensions(app):
+    """Register Flask Extensions"""
+    CORS(app, resources={r"/api/*": {"origins": settings.ORIGINS}})
+    Bcrypt(app)
+    Migrate(app)
+    db.init_app(app)
+    return None
 
 
-@app.cli.command('initdb')
-def initdb_command():
-    """Delete DB and creates a new database with all the Markdown files."""
-    init_db()
-    log.info("Created the database.")
-
-
-@app.cli.command('initdataset')
-def initdataset_command():
-    """Creates the datasets needed for the chatbot."""
-    init_dataset()
-    log.info("Initialized the datasets.")
-
-
-@app.cli.command('updatedb')
-def updatedb_command():
-    """Update the database with the markdown files."""
-    update_db()
-    log.info("Database updated with the markdown files.")
+def configure_logger(app):
+    """Configure loggers."""
+    handler = logging.StreamHandler(sys.stdout)
+    if not app.logger.handlers:
+        app.logger.addHandler(handler)

@@ -54,7 +54,7 @@ def val_alpha(value):
 
 def val_alpha_num(value):
     """User input validation for checking a-z A-Z 0-9 _ . - ?"""
-    match = re.findall(r"[^\ \w\.-\?]", value)
+    match = re.findall(r"[^\ \w\.-\?]", str(value))
     if match:
         log("User supplied not an a-z A-Z 0-9 _ . - ? value", "MEDIUM", "FAIL")
         abort(400, "Validation Error")

@@ -1,7 +1,7 @@
 from flask_restx import Resource
 
-from seckf.api.labs.business import get_labs_code
 from seckf.api.labs.serializers import lab_items_code, message
+from seckf.api.labs_code.business import get_labs_code
 from seckf.api.restplus import api
 from seckf.api.security import security_headers, val_alpha_num_special
 

@@ -12,10 +12,10 @@ API_URL = os.environ.get("API_URL") or f"http://{FLASK_HOST}:{FLASK_PORT}/api/"
 ORIGINS = '*'
 
 # Flask-Restplus settings
-RESTPLUS_SWAGGER_UI_DOC_EXPANSION = 'list'
+SWAGGER_UI_DOC_EXPANSION = 'list'
 RESTPLUS_VALIDATE = True
 RESTPLUS_MASK_SWAGGER = False
-RESTPLUS_ERROR_404_HELP = False
+RESTX_ERROR_404_HELP = False
 
 # Database settings
 DATABASE = os.environ.get("DATABASE_URL") or "sqlite:///dev.db"

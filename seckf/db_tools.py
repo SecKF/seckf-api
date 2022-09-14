@@ -4,17 +4,15 @@ import os
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
-from seckf.database import db
 from seckf.database.checklist_category import ChecklistCategory
 from seckf.database.code_items import CodeItem
 from seckf.database.kb_items import KBItem
 from seckf.initial_data import load_initial_data
 
-logging.config.fileConfig('logging.conf')
 log = logging.getLogger(__name__)
 
 
-def clear_db():
+def clear_db(db):
     log.info("Clearing the database")
     try:
         db.drop_all()
@@ -25,45 +23,45 @@ def clear_db():
         raise
 
 
-def init_db(testing=False):
+def init_db(db):
     """Initializes the database."""
     try:
         log.info("Initializing the database")
         db.create_all()
         prerequisits()
-        init_md_code_examples()
-        init_md_testing_examples()
-        init_md_knowledge_base()
-        load_initial_data()
+        init_md_code_examples(db)
+        init_md_testing_examples(db)
+        init_md_knowledge_base(db)
+        load_initial_data(db)
     except:
         db.session.remove()
         log.info("Database is already existsing, nothing to do")
 
 
-def clean_db(testing=False):
+def clean_db(db):
     """Clean and Initializes the database."""
     log.info("Clean and Initializing the database")
-    clear_db()
+    clear_db(db)
     db.create_all()
-    prerequisits()
-    init_md_code_examples()
-    init_md_testing_examples()
-    init_md_knowledge_base()
-    load_initial_data()
+    prerequisits(db)
+    init_md_code_examples(db)
+    init_md_testing_examples(db)
+    init_md_knowledge_base(db)
+    load_initial_data(db)
     db.session.commit()
 
 
-def update_db():
+def update_db(db):
     """Update the database."""
     log.info("Update the database")
     KBItem.query.delete()
     CodeItem.query.delete()
     db.session.commit()
-    init_md_code_examples()
-    init_md_knowledge_base()
+    init_md_code_examples(db)
+    init_md_knowledge_base(db)
 
 
-def init_md_knowledge_base():
+def init_md_knowledge_base(db):
     """Converts markdown knowledge-base items to DB."""
     kb_dir = os.path.join(current_app.root_path, 'markdown/knowledge_base/')
     kb_dir_types = ['web', 'mobile']
@@ -96,7 +94,7 @@ def init_md_knowledge_base():
         raise
 
 
-def init_md_code_examples():
+def init_md_code_examples(db):
     """Converts markdown code-example items to DB."""
     kb_dir = os.path.join(current_app.root_path, 'markdown/code_examples/web/')
     code_langs = ['asp-needs-reviewing', 'java-needs-reviewing', 'php-needs-reviewing', 'flask',
@@ -127,7 +125,7 @@ def init_md_code_examples():
         raise
 
 
-def init_md_testing_examples():
+def init_md_testing_examples(db):
     """Converts markdown testing code-example items to DB."""
     kb_dir = os.path.join(current_app.root_path, 'markdown/code_examples/web/')
     code_langs = ['testing']
@@ -156,7 +154,7 @@ def init_md_testing_examples():
         raise
 
 
-def prerequisits():
+def prerequisits(db):
     try:
         category = ChecklistCategory("Web applications", "category for web collection")
         db.session.add(category)

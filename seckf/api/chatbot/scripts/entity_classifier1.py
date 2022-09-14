@@ -4,7 +4,7 @@ from seckf.api.chatbot.scripts import entity_reco
 
 vulndict = entity_reco.entity_data()
 vulndict = {k.lower(): v for k, v in vulndict.items()}
-punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+punctuations = '''!()-[]{};:'",<>./?@#$%^&*_~'''
 
 
 def entity_recognizer(sentence):
@@ -17,13 +17,13 @@ def entity_recognizer(sentence):
     # trigram
     i = -1
     j = -1
-    while (i < len(listofWords)):
+    while i < len(listofWords):
         i = i + 1
         j = j + 1
         originalpos3.append(i)
-        if (i < len(listofWords) - 2):
+        if i < len(listofWords) - 2:
             s3 = listofWords[i] + ' ' + listofWords[i + 1] + ' ' + listofWords[i + 2]
-            if (s3 in vulndict.keys()):
+            if s3 in vulndict.keys():
                 originalpos3.pop()
                 customentitiesDict[i, i + 1, i + 2] = s3
                 copyofWords[j:j + 3] = [vulndict[s3]]

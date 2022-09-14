@@ -2,14 +2,13 @@ import logging
 
 from flask_restx import Api
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound
 
 from seckf import settings
 
 log = logging.getLogger(__name__)
 
-api = Api(version='1.0', title='OWASP-SKF API',
-          description='OWASP-SKF Flask RestPlus powered API')
+api = Api(version='1.0', title='OWASP-SKF API', description='OWASP-SKF Flask RestPlus powered API')
 
 
 @api.errorhandler
